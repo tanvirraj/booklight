@@ -1,1 +1,2 @@
 - base 10 integer (with a bit size of 64).
+- UTF-8 encoded
