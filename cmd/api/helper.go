@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -47,8 +48,14 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 }
 
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
+	maxBytes := 1_048_576
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
 	// Decode the request body into the target destination.
-	err := json.NewDecoder(r.Body).Decode(dst)
+	err := dec.Decode(dst)
 	if err != nil {
 		// If there is an error during decoding, start the triage...
 		var syntaxError *json.SyntaxError
@@ -66,7 +73,15 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		// https://github.com/golang/go/issues/25956.
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			return errors.New("body contains badly-formed JSON")
-			// Likewise, catch any *json.UnmarshalTypeError errors. These occur when the
+
+		case strings.HasPrefix(err.Error(), "json: unknown field "):
+			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
+			return fmt.Errorf("body contains unknown key %s", fieldName)
+
+		case err.Error() == "http: request body too large":
+			return fmt.Errorf("body must not be larger than %d bytes", maxBytes)
+
+		// Likewise, catch any *json.UnmarshalTypeError errors. These occur when the
 		// JSON value is the wrong type for the target destination. If the error relates
 		// to a specific field, then we include that in our error message to make it
 		// easier for the client to debug.
@@ -93,5 +108,11 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		}
 
 	}
+
+	err = dec.Decode(&struct{}{})
+	if err != io.EOF {
+		return errors.New("body must only contain a single JSON value")
+	}
+
 	return nil
 }
