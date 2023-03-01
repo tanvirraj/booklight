@@ -1,3 +1,4 @@
 - base 10 integer (with a bit size of 64).
 - UTF-8 encoded
 - streams of JSON data.
+- we write 2 file in sql migrations. one for adding new things in table and another for roll-back the changes we mdate.
