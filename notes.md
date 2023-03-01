@@ -18,3 +18,11 @@
 ---
 
 ## building api step by step
+
+---
+
+Separate out your API layer from your business logic from your data access layer.
+
+Try to avoid defining huge interfaces alongside their implementations and instead define the interface with the consumer and then you can inject the implementation into the consumer to satisfy the interface you defined.
+
+Don’t overthink it, just go with a structure that makes sense to you. You’re going to end up finding things you want to change about it later anyway, so don’t overthink it.
