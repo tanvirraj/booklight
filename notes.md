@@ -17,7 +17,15 @@
 
 ---
 
+- we’re going to wrap our MovieModel in a parent Models struct. Doing this is totally optional, but it has the benefit of giving you a convenient single ‘container’ which can hold and represent all your database models as your application grows.
+
 ## building api step by step
+
+- setup router
+- add router handler function to handle request and response
+- create db
+- create table with migrations
+- create model
 
 ---
 
